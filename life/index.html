@@ -578,7 +578,7 @@ const J=(w,a,b)=>w+(jong(w)?a:b);
 const RO=w=>{const s=String(w),c=s.charCodeAt(s.length-1);return w+(c>=0xAC00&&c<=0xD7A3&&(c-0xAC00)%28>0&&(c-0xAC00)%28!==8?'으로':'로');};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
-const ENGINE={saju:'saju-kr 2.0 (KST·절입·경도보정·조후)',name:'name-ohaeng 1.0 (발음오행·모음 음양)',pers:'성향 탐색 설문 v2.0 (32문항)',astro:'astro-lite 2.0 (궤도+섭동, 홀사인)',face:'관상 셀프 체크 v2.0 (10항목)',palm:'손금 셀프 체크 v1.0 (6항목)',match:'궁합 엔진 1.0 (사주·별자리·성향)',report:'통합 규칙 v2.0'};
+const ENGINE={saju:'saju-kr 2.1 (KST·절입·경도보정·지장간 가중·12신살)',name:'name-ohaeng 1.0 (발음오행·모음 음양)',pers:'성향 탐색 설문 v2.0 (32문항)',astro:'astro-lite 2.1 (궤도+섭동, 홀사인, 동서 12궁)',face:'관상 셀프 체크 v2.0 (10항목)',palm:'손금 셀프 체크 v1.0 (6항목)',match:'궁합 엔진 1.0 (사주·별자리·성향)',report:'통합 규칙 v2.0'};
 const MOD={saju:{n:'사주명리',c:'mod-saju'},name:'성명학',pers:{n:'성향 설문',c:'mod-pers'},astro:{n:'점성술',c:'mod-astro'},face:{n:'관상',c:'mod-face'},palm:{n:'손금',c:'mod-palm'},match:{n:'궁합',c:'mod-match'}};
 MOD.name={n:'성명학',c:'mod-name'};
 const SELF_MODS=['saju','name','pers','astro','face','palm'];
@@ -624,6 +624,18 @@ const GUIIN=[[1,7],[0,8],[11,9],[11,9],[1,7],[0,8],[1,7],[2,6],[5,3],[5,3]], MUN
 const GROUP_OF=[0,1,2,3,0,1,2,3,0,1,2,3], DOHWA=[9,6,3,0], YEOKMA=[2,11,8,5], HWAGAE=[4,1,10,7], SAMJAE=[[2,3,4],[11,0,1],[8,9,10],[5,6,7]];
 const SAMHAP_EL=[4,3,1,0]; // 申子辰水, 巳酉丑金, 寅午戌火, 亥卯未木
 const LIUHE=[1,0,11,10,9,8,7,6,5,4,3,2];
+// 12신살: 삼합의 생지(지살)부터 순행 — 申子辰→申, 巳酉丑→巳, 寅午戌→寅, 亥卯未→亥
+const SS12=['지살','년살','월살','망신살','장성살','반안살','역마살','육해살','화개살','겁살','재살','천살'], JISAL=[8,5,2,11];
+const SS12_TXT={'지살':'새 출발과 이동의 기운','년살':'도화. 매력과 인기, 감성의 기운','월살':'막힘과 정체, 기다림이 필요한 기운','망신살':'드러남과 노출, 실수 관리가 필요한 기운','장성살':'리더십과 권위, 중심에 서는 기운','반안살':'승진과 안정, 말 안장에 오르는 기운','역마살':'이동·여행·변화의 기운','육해살':'소모와 피로, 쉬어 가야 하는 기운','화개살':'예술·학문·종교, 내면으로 모이는 기운','겁살':'빼앗김과 경쟁, 방어가 필요한 기운','재살':'갇힘과 시비, 신중함이 필요한 기운','천살':'하늘의 시험, 겸손이 필요한 기운'};
+const SS12_TONE={'지살':0,'년살':0,'월살':-1,'망신살':-1,'장성살':1,'반안살':1,'역마살':0,'육해살':-1,'화개살':0,'겁살':-1,'재살':-1,'천살':-1};
+const ss12=(base,b)=>SS12[mod(b-JISAL[[0,1,2,3,0,1,2,3,0,1,2,3][base]],12)];
+// 지장간 비율: 왕지 여기·본기 3:7, 생지 여기·중기·본기 2:3:5, 고지·午 3:2:5
+const HW=b=>HIDDEN[b].length===2?[.3,.7]:[2,5,8,11].includes(b)?[.2,.3,.5]:[.3,.2,.5];
+// 동서 12궁 (승평명리 대응): 명궁 戌=양자리, 재백궁 酉=황소자리 … 상모궁 亥=물고기자리
+const PALACE=['명궁','재백궁','형제궁','전택궁','자녀궁','노복궁','부처궁','질액궁','천이궁','관록궁','복덕궁','상모궁'];
+const PALACE_TXT=['나 자신·타고난 모습','재물·돈의 그릇','형제·동료·소통','집·부동산·가정','자녀·창작·즐거움','아랫사람·일상 업무','배우자·파트너','건강·위기 관리','이동·여행·바깥 활동','직업·명예','복·정신적 즐거움','외모·인상·말년'];
+const BRANCH_SIGN=b=>mod(10-b,12), SIGN_BRANCH=s=>mod(10-s,12);
+const AGREE_TXT={'일치':'같은 별자리예요. 두 체계가 같은 "타고난 모습"을 가리켜요','인접':'바로 옆 별자리예요. 출생 시각 경계에 따른 차이로 볼 수 있어요','다름':'다른 별자리예요. 사주의 명궁과 서양의 상승궁이 서로 다른 면을 보여 줘요'};
 const pairIn=(list,a,b)=>list.some(([x,y])=>(x===a&&y===b)||(x===b&&y===a));
 const HYUNG=[[2,5],[5,8],[8,2],[1,10],[10,7],[7,1],[0,3]], JAHYUNG=[4,6,9,11];
 const PA=[[0,9],[6,3],[8,5],[2,11],[4,1],[10,7]], HAE=[[0,7],[1,6],[2,5],[3,4],[8,11],[9,10]], WONJIN=[[0,7],[1,6],[2,9],[3,8],[4,11],[5,10]];
@@ -679,9 +691,14 @@ function sajuEngine(p,N){
   const cols=[['년주',yS,yB],['월주',mS,mB],['일주',dS,dB],['시주',hS,hB]];
   const cnt=[0,0,0,0,0]; cols.forEach(([,s,b])=>{if(s!==null){cnt[sEl(s)]++;cnt[BEL[b]]++;}});
   const dEl=sEl(dS), helps=e=>e===dEl||e===mod(dEl-1,5);
-  const items=[[sEl(yS),1],[BEL[yB],1],[sEl(mS),1],[BEL[mB],2],[BEL[dB],1]]; if(hS!==null)items.push([sEl(hS),1],[BEL[hB],1]);
-  const tw=items.reduce((a,x)=>a+x[1],0), sw=items.reduce((a,x)=>a+(helps(x[0])?x[1]:0),0), ratio=sw/tw;
-  const strength=ratio>0.55?'신강':ratio<0.45?'신약':'중화';
+  // 지장간 비율로 가중한 오행 점수 (일간 제외, 월지 2배)
+  const wEl=[0,0,0,0,0]; cols.forEach(([k,s,b])=>{if(s===null)return;if(k!=='일주')wEl[sEl(s)]+=1;const mul=k==='월주'?2:1;HIDDEN[b].forEach((h,i)=>wEl[sEl(h)]+=HW(b)[i]*mul*1.2);});
+  const tw=wEl.reduce((a,b)=>a+b,0), sw=wEl[dEl]+wEl[mod(dEl-1,5)], ratio=sw/tw;
+  const deuk={득령:helps(sEl(BMAIN[mB])),득지:helps(sEl(BMAIN[dB]))};
+  const others=[sEl(yS),BEL[yB],sEl(mS)].concat(hS!==null?[sEl(hS),BEL[hB]]:[]);
+  deuk.득세=others.filter(helps).length>=others.length/2;
+  const nDeuk=Object.values(deuk).filter(Boolean).length;
+  const strength=(ratio>=0.58||(nDeuk>=2&&ratio>=0.46))?'신강':(ratio<=0.40||(nDeuk<=1&&ratio<0.5))?'신약':'중화';
   const top=cnt.indexOf(Math.max(...cnt));
   let fav,unfav;
   if(strength==='신강'){fav=[mod(dEl+1,5),mod(dEl+2,5),mod(dEl+3,5)];unfav=[dEl,mod(dEl-1,5)];}
@@ -712,15 +729,16 @@ function sajuEngine(p,N){
     if(mod(ys-dS,10)===5){t+=4;sig.push(['good','일간 합','끌리는 제안이나 사람이 나타나요.']);}
     if(GUIIN[dS].includes(yb)){t+=7;sig.push(['good','천을귀인','도움 주는 사람이 오는 해예요.']);}
     const sj=SAMJAE[GROUP_OF[yB]].indexOf(yb); if(sj>=0){t-=5;sig.push(['warn',['들','눌','날'][sj]+'삼재','확장보다 지키는 전략이 좋아요.']);}
-    if(yb===DOHWA[GROUP_OF[yB]]||yb===DOHWA[GROUP_OF[dB]])sig.push(['mid','도화','인기와 존재감이 올라가요.']);
-    if(yb===YEOKMA[GROUP_OF[yB]]||yb===YEOKMA[GROUP_OF[dB]])sig.push(['mid','역마','이동·출장·이사가 늘어요.']);
+    const y12=ss12(yB,yb), d12=ss12(dB,yb);
+    t+=SS12_TONE[y12]*3; sig.push([SS12_TONE[y12]>0?'good':SS12_TONE[y12]<0?'warn':'mid',`${y12}(띠 기준)`,SS12_TXT[y12]+'이 들어와요.']);
+    if(d12!==y12&&['장성살','반안살','년살','역마살','화개살'].includes(d12))sig.push(['mid',`${d12}(일지 기준)`,SS12_TXT[d12]+'이 함께 작용해요.']);
     const months=Array.from({length:12},(_,i)=>{const b=(i+2)%12,s=mod(ys*2+2+i,10);return {label:((i+1)%12+1)+'월',g:S[s]+B[b],v:flowScore(s,b)};});
     return {year:Y,pillar:S[ys]+B[yb],god:tenGod(dS,ys),theme_code:GODN[tenGod(dS,ys)],score:clamp(Math.round(t),28,96),signals:sig,months};});
   let daeun=null;
-  if(p.sex==='m'||p.sex==='f'){const fwd=(yS%2===0)===(p.sex==='m'),tj=findTerm(N.jd,fwd?1:-1),start=clamp(Math.round(Math.abs(tj-N.jd)/3),1,10);
+  if(p.sex==='m'||p.sex==='f'){const fwd=(yS%2===0)===(p.sex==='m'),tj=findTerm(N.jd,fwd?1:-1),yf=Math.abs(tj-N.jd)/3,start=clamp(Math.round(yf),1,10),exact=`${Math.floor(yf)}년 ${Math.round((yf%1)*12)%12}개월`;
     const m60=mod(6*mS-5*mB,60), now=new Date(), age=now.getFullYear()-p.y-((now.getMonth()+1<p.m||(now.getMonth()+1===p.m&&now.getDate()<p.d))?1:0);
     const list=Array.from({length:9},(_,i)=>{const k=mod(m60+(fwd?i+1:-(i+1)),60),v=sc(sEl(k%10))+sc(BEL[k%12]);return {pillar:S[k%10]+B[k%12],age:start+10*i,god:GODN[tenGod(dS,k%10)],trend:v>=1?'상승기':v<=-1?'조정기':'평탄기'};});
-    daeun={direction:fwd?'순행':'역행',start_age:start,age,list,current:list.find(u=>age>=u.age&&age<u.age+10)||null};
+    daeun={direction:fwd?'순행':'역행',start_age:start,exact,age,list,current:list.find(u=>age>=u.age&&age<u.age+10)||null};
   } else warnings.push('성별 미선택: 대운 방향을 정하지 않아 대운을 생략했어요.');
   const tags={}; const addT=(t,w)=>tags[t]=(tags[t]||0)+w;
   DM[dS].tags.forEach(t=>addT(t,2)); if(topGod)addT(GOD_TAG[topGod],1.5); addT(GOD_TAG[tenGod(dS,BMAIN[mB])],1);
@@ -728,7 +746,10 @@ function sajuEngine(p,N){
   if(strength==='신강')addT('추진력',.75); if(strength==='신약')addT('관계·공감',.75);
   shinsal.forEach(s=>{if(s.k==='역마')addT('자유·변화',.5);if(s.k==='화개')addT('분석·탐구',.5);if(s.k==='도화'||s.k==='홍염')addT('관계·공감',.5);if(s.k==='양인'||s.k==='괴강')addT('추진력',.5);});
   return {module:'saju',engine_version:ENGINE.saju,
-    ruleset:{year_boundary:'입춘(황경 315°)',month_boundary:'12절(황경 15°+30°k)',day_boundary:p.yaja?'자정(야자시)':'23시(자시 시작)',solar_time:p.lon==null?'보정 안 함':`경도 ${p.lon}° 지방평균시`,strength:'월지 2배 가중 억부',yongsin:'억부 + 조후(여름 水, 겨울 火)',gyeokguk:'월지 본기 십성(약식)',daeun:'3일=1년, 반올림'},
+    ruleset:{year_boundary:'입춘(황경 315°)',month_boundary:'12절(황경 15°+30°k)',day_boundary:p.yaja?'자정(야자시)':'23시(자시 시작)',solar_time:p.lon==null?'보정 안 함':`경도 ${p.lon}° 지방평균시`,strength:'지장간 비율 가중(여기·중기·본기) + 월지 2배 + 득령·득지·득세',yongsin:'억부 + 조후(여름 水, 겨울 火)',gyeokguk:'월지 본기 십성(약식)',shinsal12:'삼합 기준 12신살(년지·일지)',daeun:'3일=1년, 1일=4개월'},
+    elements_weighted:Object.fromEntries(EL.map((e,i)=>[e,+wEl[i].toFixed(1)])),deuk,
+    stages12:Object.fromEntries(cols.filter(c=>c[1]!==null).map(([k,s,b])=>[k,{봉:STAGES[stageI(dS,b)],자좌:STAGES[stageI(s,b)]}])),
+    shinsal12:Object.fromEntries(cols.filter(c=>c[1]!==null).map(([k,s,b])=>[k,{년지기준:ss12(yB,b),일지기준:ss12(dB,b)}])),
     pillars:{year:S[yS]+B[yB],month:S[mS]+B[mB],day:S[dS]+B[dB],hour:hS===null?null:S[hS]+B[hB]},
     day_master:{stem:S[dS],element:EL[dEl],image:DM[dS].n,type:DM[dS].t},
     gyeokguk:{name:gk[0],desc:gk[1],fields:gk[2]},
@@ -736,10 +757,10 @@ function sajuEngine(p,N){
     relation_codes:Object.fromEntries(Object.entries(gods).map(([g,n])=>[`${GODN[g]}(${g})`,n])),code_groups:groups,top_code:topGod?`${GODN[topGod]}(${topGod})`:null,
     chart_relations:rels.map(r=>`${r.k} ${r.a} (${r.pos})`),
     shinsal:shinsal.map(s=>s.k),zodiac_animal:ANI[yB],
-    daeun:daeun&&{direction:daeun.direction,start_age:daeun.start_age,current:daeun.current},
+    daeun:daeun&&{direction:daeun.direction,start_age:daeun.start_age,start_exact:daeun.exact,current:daeun.current},
     years:years.map(y=>({year:y.year,pillar:y.pillar,theme_code:y.theme_code,score:y.score,signals:y.signals.map(s=>s[1])})),
     warnings,tags,
-    _:{X,cols,cnt,dS,dEl,fav,unfav,sc,gods,rels,shinsal,years,daeun,season,flowScore}};
+    _:{X,cols,cnt,dS,dEl,fav,unfav,sc,gods,rels,shinsal,years,daeun,season,flowScore,wEl,deuk,ratio}};
 }
 function todayFortune(Sj,sex){
   const now=new Date(), k=new Date(now.getTime()+9*3600e3), jdn=Date.UTC(k.getUTCFullYear(),k.getUTCMonth(),k.getUTCDate())/864e5+2440588, dI=mod(jdn+49,60), s=dI%10, b=dI%12;
@@ -908,6 +929,12 @@ function astroEngine(p,N){
     for(const [pn,pl] of Object.entries(tp))for(const [qn,ql] of points){const sep=Math.abs(mod(pl-ql+180,360)-180);
       for(const a of [0,90,120,180])if(Math.abs(sep-a)<=2.5){const key=pn+qn+a+Y;if(!seen.has(key)){seen.add(key);transits.push({year:Y,month:Mo+1,planet:pn,point:qn,aspect:ASPECTS.find(x=>x[0]===a)[1],good:a===120||(pn==='목성'&&a===0)?1:a===0?0:-1,t:TR_TXT[pn][a]});}}}}
   const tags={}; const addT=(t,w)=>tags[t]=(tags[t]||0)+w;
+  // 동서 12궁: 월장(태양이 있는 별자리의 지지)에서 출생 시지만큼 돌려 명궁을 구함 — 卯시에 태어나면 명궁=월장
+  let pal=null; const X=pillarsOf(p,N);
+  if(p.known&&X.hB!==null){const sunB=SIGN_BRANCH(bodies[0].si),ming=mod(sunB+3-X.hB,12),mingS=BRANCH_SIGN(ming),ascS=asc!==null?Math.floor(asc/30):null;
+    const rows=PALACE.map((nm,k)=>{const b=mod(ming-k,12),s=BRANCH_SIGN(b);return {palace:nm,meaning:PALACE_TXT[k],branch:B[b],sign:SIGN[s],planets:bodies.filter(x=>x.si===s).map(x=>x.name),saju:[['년지',X.yB],['월지',X.mB],['일지',X.dB],['시지',X.hB]].filter(([,v])=>v===b).map(([n])=>n)};});
+    const diff=ascS===null?null:Math.min(mod(mingS-ascS,12),mod(ascS-mingS,12));
+    pal={ming:B[ming],mingSign:SIGN[mingS],sunBranch:B[sunB],rows,ascSign:ascS===null?null:SIGN[ascS],agree:diff===null?null:diff===0?'일치':diff===1?'인접':'다름'};}
   AST_EL_TAG[SIGN_EL[bodies[0].si%4]].forEach(t=>addT(t,1.5)); if(p.known)AST_EL_TAG[SIGN_EL[bodies[1].si%4]].forEach(t=>addT(t,.75));
   if(asc!==null)AST_EL_TAG[SIGN_EL[Math.floor(asc/30)%4]].forEach(t=>addT(t,.75));
   AST_EL_TAG[domEl].forEach(t=>addT(t,.75));
@@ -919,7 +946,8 @@ function astroEngine(p,N){
     bodies:bodies.map(b=>({name:b.name,sign:b.sign,deg:b.deg,house:b.house,retrograde:b.retro})),
     aspects:aspects.slice(0,10).map(a=>`${a.a}–${a.b} ${a.type} (오차 ${a.orb}°)`),element_balance:elCount,mode_balance:modeCount,dominant_element:domEl,dominant_mode:domMode,
     transits_2026_2028:transits.map(t=>`${t.year}.${t.month} ${t.planet} ${t.aspect} 출생 ${t.point}`),jupiter_saturn_houses:yearHouse,
-    warnings,tags,_:{L,asc,mc,bodies,aspects,transits,yearHouse,refSign}};
+    palaces12:pal&&{method:'월장+시지로 구한 명궁, 승평명리 12궁–지지–별자리 대응',ming:`${pal.ming}(${pal.mingSign})`,agreement_with_ascendant:pal.agree,palaces:pal.rows.map(r=>`${r.palace} ${r.branch}/${r.sign}: 천체 ${r.planets.join('·')||'없음'}${r.saju.length?' · 사주 '+r.saju.join('·'):''}`)},
+    warnings,tags,_:{L,asc,mc,bodies,aspects,transits,yearHouse,refSign,pal}};
 }
 
 /* ═════════ 관상 v2 · 손금 ═════════ */
@@ -1060,6 +1088,14 @@ function integrate(R,p){
     D.health.L.push(`전통 오행 상징으로는 약한 <b>${EL[low]}</b> 기운과 연결된 ${EL_HEALTH[low]}, 넘치는 <b>${EL[hi]}</b> 기운과 연결된 ${EL_HEALTH[hi]}에 신경 써 보세요. 추천 습관: ${EL_HABIT[low]}.`);}
   if(P)D.health.L.push(`스트레스 반응: ${P.patterns.stress}. 회복법: ${P.patterns.recovery}.`);
   if(A)D.health.L.push(`달 <b>${A.moon.sign}</b>는 마음이 쉬는 방식으로 ${SIGN_TXT[SIGN.indexOf(A.moon.sign)]}을(를) 필요로 해요.`.replace(/(\S+(?: \S+)*)을\(를\)/,(m,w)=>J(w,'을','를')));
+  // 동서 12궁: 각 궁에 들어온 천체·사주 글자를 생활 영역에 연결
+  const pal=A&&A._.pal; let bridge=null;
+  if(pal){const line=(k,lab)=>{const r=pal.rows[k],l=[...r.planets,...r.saju];return l.length?`${r.palace}(${r.branch}·${r.sign})에 ${l.join('·')}${jong(l[l.length-1])?'이':'가'} 있어 ${lab}`:null;};
+    const add=(dom,k,lab)=>{const s=line(k,lab);if(s){D[dom].L.push(s);if(!D[dom].src.includes('astro'))D[dom].src.push('astro');}};
+    add('self',0,'타고난 모습이 이 기운으로 또렷해져요.'); add('money',1,'재물의 그릇에 힘이 실려요.'); add('love',6,'배우자·파트너 관계가 삶에서 큰 비중을 가져요.');
+    add('health',7,'몸의 신호를 평소보다 세심하게 살피면 좋아요.'); add('work',9,'직업과 명예의 영역이 활발해요.');
+    if(pal.agree){bridge={agree:pal.agree,ming:pal.ming,mingSign:pal.mingSign,asc:pal.ascSign};
+      D.self.L.push(`사주 명궁 <b>${pal.ming}(${pal.mingSign})</b>과 서양 상승궁 <b>${pal.ascSign}</b>: ${AGREE_TXT[pal.agree]}.`);}}
   D.health.L.push('<small>건강 진단이 아니에요. 몸이 불편하면 전문가와 상담하세요.</small>');
   // 3년 타임라인
   const years=[2026,2027,2028].map(Y=>{const sy=Sj?Sj._.years.find(y=>y.year===Y):null, tr=A?A._.transits.filter(t=>t.year===Y):[], yh=A?A._.yearHouse[Y]:null;
@@ -1071,7 +1107,7 @@ function integrate(R,p){
     tr.slice(0,3).forEach(t=>L.push(`${t.month}월 무렵 ${t.planet} ${t.aspect} 출생 ${t.point}: ${t.t}`));
     let strat=score>=72?'확장의 해 — 새로 시작하고 판을 키우기 좋아요.':score>=55?'다지기의 해 — 하던 일을 단단하게 만들고 기회를 고르세요.':'정비의 해 — 무리한 확장보다 체력과 기반을 지키는 전략이 좋아요.';
     return {year:Y,pillar:sy?sy.pillar:S[mod(Y-4,10)]+B[mod(Y-4,12)],score,L,strat,months:sy?sy.months:null};});
-  return {engine_version:ENGINE.report,per,total,recurring,conflicts,questions:questions.slice(0,5),gaps,topOf,domains:D,years};
+  return {engine_version:ENGINE.report,per,total,recurring,conflicts,questions:questions.slice(0,5),gaps,topOf,domains:D,years,bridge};
 }
 
 /* ═════════ 시각화 ═════════ */
@@ -1318,14 +1354,19 @@ function renderResult(){
        <div class="rl">지지</div>${cell(c=>`<div class="ch el-${BEL[c[2]]}">${B[c[2]]}<small>${BK[c[2]]}</small></div>`)}
        <div class="rl">십성</div>${cell(c=>`<div class="sm">${GODN[tenGod(X.dS,BMAIN[c[2]])].split('(')[0]}</div>`)}
        <div class="rl">지장간</div>${cell(c=>`<div class="sm">${HIDDEN[c[2]].map(h=>`<span class="el-${sEl(h)}" style="font-family:var(--f-glyph)">${S[h]}</span>`).join('')}</div>`)}
-       <div class="rl">12운성</div>${cell(c=>`<div class="sm">${STAGES[stageI(X.dS,c[2])]}</div>`)}</div>
+       <div class="rl">12운성</div>${cell(c=>`<div class="sm">${STAGES[stageI(X.dS,c[2])]}</div>`)}
+       <div class="rl">자좌</div>${cell(c=>`<div class="sm">${STAGES[stageI(c[1],c[2])]}</div>`)}
+       <div class="rl">12신살</div>${cell(c=>{const n=ss12(X.yB,c[2]);return `<div class="sm" title="${SS12_TXT[n]}" style="color:${SS12_TONE[n]>0?'var(--good)':SS12_TONE[n]<0?'var(--warn)':'var(--muted)'}">${n}</div>`;})}</div>
       <div class="ebar">${EL.map((e,i)=>`<div class="el-${i}"><i><em style="height:${cnt[i]/Math.max(mx,1)*100}%"></em></i><span>${ELH[i]} ${e} ${cnt[i]}</span></div>`).join('')}</div></div>
       <div style="display:flex;flex-direction:column;gap:10px">
        <p>${esc(DM[Sj._.dS].d)}${jong(DM[Sj._.dS].d)?'이':'가'} 중심이에요. ${esc(DM[Sj._.dS].w)}.</p>
        <dl class="kv"><dt>격국</dt><dd>${esc(Sj.gyeokguk.name)} — ${esc(Sj.gyeokguk.desc)}</dd><dt>용신</dt><dd>${Sj.favorable_elements.join(', ')}${Sj.johu?` (조후: ${Sj.johu})`:''}</dd>
+        <dt>신강·신약</dt><dd>${Sj.strength} (돕는 기운 ${Sj.strength_ratio}%) · ${Object.entries(Sj.deuk).map(([k,v])=>`<span class="tag ${v?'good':'mid'}">${k} ${v?'○':'✕'}</span>`).join(' ')}</dd>
+        <dt>오행 점수</dt><dd>${EL.map((e,i)=>`<span class="el-${i}">${ELH[i]}</span> ${Sj._.wEl[i].toFixed(1)}`).join(' · ')} <span class="note">(지장간 비율 포함)</span></dd>
+        <dt>12신살</dt><dd>일지 기준 ${Sj._.cols.filter(c=>c[1]!==null).map(c=>`${c[0][0]} ${ss12(Sj._.X.dB,c[2])}`).join(' · ')}</dd>
         <dt>코드 분포</dt><dd>${Object.entries(Sj.code_groups).map(([k,v])=>`${k} ${v}`).join(' · ')}</dd><dt>신살</dt><dd>${Sj._.shinsal.length?Sj._.shinsal.map(s=>`${s.k}(${s.where.join('·')})`).join(', '):'두드러진 신살 없음'}</dd></dl>
        <div class="rel-list">${Sj._.rels.length?Sj._.rels.map(r=>`<div class="rel"><span class="tag ${tagCls(r.good)}">${r.k}</span><span><b>${r.a}</b> <span class="note">${r.pos}</span> — ${esc(r.d)}</span></div>`).join(''):'<p class="note">원국 안에서 두드러진 합·충이 없어 기운이 비교적 안정적으로 흘러요.</p>'}</div></div></div>
-     ${Sj._.daeun?`<div><h4 style="margin-bottom:6px">대운 (${Sj._.daeun.direction}, ${Sj._.daeun.start_age}세 시작)</h4><div class="chart-scroll"><div class="daeun">${Sj._.daeun.list.map(u=>`<div class="du${Sj._.daeun.current===u?' now':''}">${u.age}세<b>${u.pillar}</b>${u.trend}</div>`).join('')}</div></div></div>`:''}
+     ${Sj._.daeun?`<div><h4 style="margin-bottom:6px">대운 (${Sj._.daeun.direction}, 대운수 ${Sj._.daeun.start_age} · 정밀 ${Sj._.daeun.exact})</h4><div class="chart-scroll"><div class="daeun">${Sj._.daeun.list.map(u=>`<div class="du${Sj._.daeun.current===u?' now':''}">${u.age}세<b>${u.pillar}</b>${u.trend}</div>`).join('')}</div></div></div>`:''}
      <div class="row">${Sj._.years.map(y=>`<span class="pill">${y.year} ${y.pillar} · <b>${y.score}</b>점 · ${esc(y.theme_code)}</span>`).join('')}<a class="btn ghost sm" href="https://www.saju-vottary.com/" target="_blank" rel="noopener">사주 코드에서 자세히 ↗</a></div>
      ${warnList(Sj.warnings)}${jsonBox(Sj)}</article>`);}
   if(Nm){const it=Nm._.items,fl=Nm._.flows;
@@ -1352,6 +1393,9 @@ function renderResult(){
        <p class="note">세대 행성: ${b.slice(7).map(x=>`${x.name} ${x.sign}${x.retro?' ℞':''}`).join(' · ')}</p></div></div>
      <div class="two"><div><h4 style="margin-bottom:6px">주요 각도</h4><ul>${A._.aspects.slice(0,6).map(a=>`<li><b>${a.a}–${a.b} ${a.type}</b> <span class="note">(오차 ${a.orb}°)</span> — ${a.t}</li>`).join('')||'<li>두드러진 각도가 없어요.</li>'}</ul></div>
       <div><h4 style="margin-bottom:6px">원소·성질 분포</h4><dl class="kv">${Object.entries(A.element_balance).map(([k,v])=>`<dt>${k}</dt><dd>${'●'.repeat(v)}<span class="note"> ${v}</span></dd>`).join('')}${Object.entries(A.mode_balance).map(([k,v])=>`<dt>${k}</dt><dd>${'○'.repeat(v)}<span class="note"> ${v}</span></dd>`).join('')}</dl></div></div>
+     ${A._.pal?`<div><h4 style="margin-bottom:6px">동서 12궁 · 명궁 ${A._.pal.ming}(${A._.pal.mingSign})</h4>
+      <p class="note" style="margin-bottom:8px">태양이 있는 별자리의 지지(월장 ${A._.pal.sunBranch})에서 출생 시지만큼 돌려 명궁을 구하고, 승평명리의 12궁–지지–별자리 대응으로 배치했어요.${A._.pal.agree?` 서양 상승궁(${A._.pal.ascSign})과 비교하면 <b class="hl">${AGREE_TXT[A._.pal.agree]}</b>.`:''}</p>
+      <div class="tbl-scroll"><table class="pos"><thead><tr><th>궁</th><th>지지</th><th>별자리</th><th>의미</th><th>천체</th><th>사주</th></tr></thead><tbody>${A._.pal.rows.map(r=>`<tr><td><b>${r.palace}</b></td><td style="font-family:var(--f-glyph)">${r.branch}</td><td>${r.sign}</td><td>${r.meaning}</td><td>${r.planets.join(' ')||'-'}</td><td>${r.saju.join(' ')||'-'}</td></tr>`).join('')}</tbody></table></div></div>`:`<p class="note">동서 12궁은 출생 시각이 있어야 계산할 수 있어요.</p>`}
      <details class="more"><summary>천체 위치 표 보기</summary><div class="tbl-scroll"><table class="pos"><thead><tr><th>천체</th><th>별자리</th><th>도</th><th>하우스</th></tr></thead><tbody>${b.map(x=>`<tr><td>${x.glyph}︎ ${x.name}${x.retro?' ℞':''}</td><td>${x.sign}</td><td>${x.deg}°</td><td>${x.house}</td></tr>`).join('')}${A.ascendant?`<tr><td>ASC</td><td>${A.ascendant.sign}</td><td>${A.ascendant.deg}°</td><td>1</td></tr>`:''}${A.midheaven?`<tr><td>MC</td><td>${A.midheaven.sign}</td><td>${A.midheaven.deg}°</td><td>-</td></tr>`:''}</tbody></table></div></details>
      ${warnList(A.warnings)}${jsonBox(A)}</article>`);}
   [[F,'face','관상 셀프 체크'],[Pm,'palm','손금 셀프 체크']].forEach(([X,k,t])=>{if(!X)return;
@@ -1371,7 +1415,7 @@ function renderResult(){
       ${warnList(M.warnings)}${jsonBox(M)}</article></section>`);}
   const vsHtml=I.conflicts.length?I.conflicts.map(c=>`<div class="sheet vsi"><b>${c.a} ↔ ${c.b}</b><div class="${MOD[c.ma[0]].c}"><small>${c.ma.map(m=>MOD[m].n).join(' · ')}</small>${J(THEME_TXT[c.a],'을','를')} 더 강조해요.</div><div class="${MOD[c.mb[0]].c}"><small>${c.mb.map(m=>MOD[m].n).join(' · ')}</small>${J(THEME_TXT[c.b],'을','를')} 더 강조해요.</div><p>어느 쪽이 맞다기보다, 타고난 기질(사주·별자리)과 지금 스스로 느끼는 선호(설문)·인상(관상·손금)이 다를 수 있어요. 상황에 따라 두 면이 모두 나타나는지 살펴보세요.</p></div>`).join('')
     :'<div class="sheet vsi"><b>크게 엇갈리는 부분이 없어요</b><p>고른 모듈들이 비슷한 방향을 가리키고 있어요. 그래도 각 모듈이 강조하는 세부 내용은 조금씩 달라요.</p></div>';
-  H.push(`<section class="sec" id="r-vs"><div><span class="label">06 · Agreements & differences</span><h2>일치와 차이</h2></div><div class="vs">${vsHtml}</div></section>`);
+  H.push(`<section class="sec" id="r-vs"><div><span class="label">06 · Agreements & differences</span><h2>일치와 차이</h2></div><div class="vs">${I.bridge?`<div class="sheet vsi"><b>사주 명궁 ↔ 서양 상승궁 (${I.bridge.agree})</b><div class="mod-saju"><small>사주명리 · 명궁</small>${I.bridge.ming}궁 — 승평명리 대응으로 ${I.bridge.mingSign}</div><div class="mod-astro"><small>점성술 · 상승궁(ASC)</small>${I.bridge.asc} — 출생 시각과 위도로 계산</div><p>${AGREE_TXT[I.bridge.agree]}. 두 체계가 "태어난 순간 동쪽 지평선에 떠오른 하늘"을 각자의 방식으로 계산한 값이라 서로 검증하는 데 쓸 수 있어요.</p></div>`:''}${vsHtml}</div></section>`);
   H.push(`<section class="sec" id="r-q"><div><span class="label">07 · Reflection</span><h2>스스로에게 던지는 질문</h2></div><div class="sheet panel"><ol class="qs">${I.questions.map(q=>`<li>${q}</li>`).join('')}</ol></div></section>`);
   H.push(`<section class="sheet ai" id="r-ai"><div class="hd"><div><span class="label">08 · AI integrated report</span><h2>AI 통합 보고서</h2></div><div class="row"><button class="btn primary" type="button" id="aiBtn">AI로 통합 보고서 작성</button><button class="btn" type="button" id="aiStop" hidden>중지</button></div></div>
     <p class="note" id="aiNote"></p><div class="ai-stream" id="aiStream" hidden></div><div class="ai-out" id="aiOut"></div></section>`);
